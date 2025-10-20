@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miden IQ Quiz</title>
+  <style>
+    :root {
+      --accent: #ff7a00;
+      --bg: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .quiz-container {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 500px;
+      padding: 24px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--accent);
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .question {
+      font-weight: 600;
+      font-size: 17px;
+      margin-bottom: 14px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .option:hover {
+      border-color: var(--accent);
+      background: #fff7f0;
+    }
+
+    .option.selected {
+      background: #fff0e0;
+      border-color: var(--accent);
+    }
+
+    button {
+      margin-top: 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: block;
+      width: 100%;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .score-section {
+      text-align: center;
+    }
+
+    .score-section h2 {
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .restart-btn {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-top: 10px;
+      width: auto;
+      padding: 8px 14px;
+    }
+
+    .orange-bg {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle at 50% 50%, rgba(255,122,0,0.07), transparent 70%);
+      top: -100px;
+      right: -100px;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Intro Screen */
+    .intro-screen {
+      text-align: center;
+    }
+
+    .intro-screen p {
+      color: var(--muted);
+      font-size: 15px;
+      margin-top: -10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="orange-bg"></div>
+    <div class="content">
+      <h1>Miden IQ Test</h1>
+
+      <!-- Intro Screen -->
+      <div id="intro" class="intro-screen">
+        <p>Test your understanding of Polygon Miden in 10 quick questions.<br>Ready?</p>
+        <button id="start-btn">Start Quiz</button>
+      </div>
+
+      <!-- Quiz -->
+      <div id="quiz" style="display:none;">
+        <div id="question-container"></div>
+        <div id="options-container" class="options"></div>
+        <button id="next-btn">Next</button>
+      </div>
+
+      <!-- Score -->
+      <div id="score-container" class="score-section" style="display:none;">
+        <h2>Your Score</h2>
+        <p id="score-text"></p>
+        <button class="restart-btn" onclick="restartQuiz()">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      { q: "What is Polygon Miden primarily focused on?", options: ["Proof of Stake scaling", "ZK-rollup with client-side proving", "Layer 1 blockchain consensus", "Cross-chain bridges"], answer: 1 },
+      { q: "What virtual machine does Miden use?", options: ["Cairo VM", "EVM", "Miden VM", "Move VM"], answer: 2 },
+      { q: "Miden’s ZK architecture allows users to generate proofs on:", options: ["The sequencer node", "Their own device", "Validators only", "The Polygon PoS chain"], answer: 1 },
+      { q: "Miden proofs are built on which type of cryptographic primitive?", options: ["Bulletproofs", "STARKs", "SNARKs", "zkSync proofs"], answer: 1 },
+      { q: "What programming language compiles to Miden Assembly?", options: ["Solidity", "Rust", "Miden Assembly (MASM)", "JavaScript"], answer: 2 },
+      { q: "What is one main benefit of Miden’s client-side proving?", options: ["Higher gas fees", "Users control privacy and computation", "Centralized verification", "Requires trusted setup"], answer: 1 },
+      { q: "Miden is developed under which ecosystem?", options: ["zkSync", "StarkNet", "Polygon", "MidenVM"], answer: 3 },
+      { q: "Miden Rollup uses proofs to verify:", options: ["Every block mined", "Off-chain computations", "Token swaps", "Gas prices"], answer: 1 },
+      { q: "What is Miden ultimately trying to enable for users and developers?", options: ["Fully verifiable, private, and self-contained applications", "Faster token swaps on Polygon PoS", "Centralized rollup management", "Traditional smart contracts with no proofs"], answer: 0 },
+      { q: "Miden’s design goal is to allow users to:", options: ["Avoid using wallets", "Prove their own state transitions privately", "Increase gas usage", "Run mining nodes"], answer: 1 }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    const intro = document.getElementById("intro");
+    const quiz = document.getElementById("quiz");
+    const questionContainer = document.getElementById("question-container");
+    const optionsContainer = document.getElementById("options-container");
+    const nextBtn = document.getElementById("next-btn");
+    const scoreContainer = document.getElementById("score-container");
+    const scoreText = document.getElementById("score-text");
+    const startBtn = document.getElementById("start-btn");
+
+    startBtn.addEventListener("click", startQuiz);
+
+    function startQuiz() {
+      intro.style.display = "none";
+      quiz.style.display = "block";
+      currentQuestion = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const qData = quizData[currentQuestion];
+      questionContainer.textContent = `${currentQuestion + 1}. ${qData.q}`;
+      optionsContainer.innerHTML = "";
+      qData.options.forEach((opt, i) => {
+        const div = document.createElement("div");
+        div.classList.add("option");
+        div.textContent = opt;
+        div.addEventListener("click", () => selectOption(i, div));
+        optionsContainer.appendChild(div);
+      });
+    }
+
+    function selectOption(i, div) {
+      document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+      div.classList.add("selected");
+      div.dataset.selected = i;
+    }
+
+    nextBtn.addEventListener("click", () => {
+      const selected = document.querySelector(".option.selected");
+      if (!selected) return alert("Please select an answer before continuing!");
+      const selectedIndex = parseInt(selected.dataset.selected);
+      if (selectedIndex === quizData[currentQuestion].answer) score++;
+      currentQuestion++;
+      if (currentQuestion < quizData.length) {
+        showQuestion();
+      } else {
+        showScore();
+      }
+    });
+
+    function showScore() {
+      quiz.style.display = "none";
+      scoreContainer.style.display = "block";
+      scoreText.textContent = `You got ${score} out of ${quizData.length}!`;
+    }
+
+    function restartQuiz() {
+      scoreContainer.style.display = "none";
+      intro.style.display = "block";
+    }
+  </script>
+</body>
+</html>
