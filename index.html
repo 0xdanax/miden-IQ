@@ -170,83 +170,102 @@
   </div>
 
   <script>
-    const quizData = [
-      { q: "What is Polygon Miden primarily focused on?", options: ["Proof of Stake scaling", "ZK-rollup with client-side proving", "Layer 1 blockchain consensus", "Cross-chain bridges"], answer: 1 },
-      { q: "What virtual machine does Miden use?", options: ["Cairo VM", "EVM", "Miden VM", "Move VM"], answer: 2 },
-      { q: "Miden’s ZK architecture allows users to generate proofs on:", options: ["The sequencer node", "Their own device", "Validators only", "The Polygon PoS chain"], answer: 1 },
-      { q: "Miden proofs are built on which type of cryptographic primitive?", options: ["Bulletproofs", "STARKs", "SNARKs", "zkSync proofs"], answer: 1 },
-      { q: "What programming language compiles to Miden Assembly?", options: ["Solidity", "Rust", "Miden Assembly (MASM)", "JavaScript"], answer: 2 },
-      { q: "What is one main benefit of Miden’s client-side proving?", options: ["Higher gas fees", "Users control privacy and computation", "Centralized verification", "Requires trusted setup"], answer: 1 },
-      { q: "Miden is developed under which ecosystem?", options: ["zkSync", "StarkNet", "Polygon", "MidenVM"], answer: 3 },
-      { q: "Miden Rollup uses proofs to verify:", options: ["Every block mined", "Off-chain computations", "Token swaps", "Gas prices"], answer: 1 },
-      { q: "What is Miden ultimately trying to enable for users and developers?", options: ["Fully verifiable, private, and self-contained applications", "Faster token swaps on Polygon PoS", "Centralized rollup management", "Traditional smart contracts with no proofs"], answer: 0 },
-      { q: "Miden’s design goal is to allow users to:", options: ["Avoid using wallets", "Prove their own state transitions privately", "Increase gas usage", "Run mining nodes"], answer: 1 }
-    ];
+  const quizData = [
+    { q: "What is Polygon Miden primarily focused on?", options: ["Proof of Stake scaling", "ZK-rollup with client-side proving", "Layer 1 blockchain consensus", "Cross-chain bridges"], answer: 1 },
+    { q: "What virtual machine does Miden use?", options: ["Cairo VM", "EVM", "Miden VM", "Move VM"], answer: 2 },
+    { q: "Miden’s ZK architecture allows users to generate proofs on:", options: ["The sequencer node", "Their own device", "Validators only", "The Polygon PoS chain"], answer: 1 },
+    { q: "Miden proofs are built on which type of cryptographic primitive?", options: ["Bulletproofs", "STARKs", "SNARKs", "zkSync proofs"], answer: 1 },
+    { q: "What programming language compiles to Miden Assembly?", options: ["Solidity", "Rust", "Miden Assembly (MASM)", "JavaScript"], answer: 2 },
+    { q: "What is one main benefit of Miden’s client-side proving?", options: ["Higher gas fees", "Users control privacy and computation", "Centralized verification", "Requires trusted setup"], answer: 1 },
+    { q: "Miden is developed under which ecosystem?", options: ["zkSync", "StarkNet", "Polygon", "MidenVM"], answer: 3 },
+    { q: "Miden Rollup uses proofs to verify:", options: ["Every block mined", "Off-chain computations", "Token swaps", "Gas prices"], answer: 1 },
+    { q: "What is Miden ultimately trying to enable for users and developers?", options: ["Fully verifiable, private, and self-contained applications", "Faster token swaps on Polygon PoS", "Centralized rollup management", "Traditional smart contracts with no proofs"], answer: 0 },
+    { q: "Miden’s design goal is to allow users to:", options: ["Avoid using wallets", "Prove their own state transitions privately", "Increase gas usage", "Run mining nodes"], answer: 1 }
+  ];
 
-    let currentQuestion = 0;
-    let score = 0;
+  let currentQuestion = 0;
+  let score = 0;
 
-    const intro = document.getElementById("intro");
-    const quiz = document.getElementById("quiz");
-    const questionContainer = document.getElementById("question-container");
-    const optionsContainer = document.getElementById("options-container");
-    const nextBtn = document.getElementById("next-btn");
-    const scoreContainer = document.getElementById("score-container");
-    const scoreText = document.getElementById("score-text");
-    const startBtn = document.getElementById("start-btn");
+  const intro = document.getElementById("intro");
+  const quiz = document.getElementById("quiz");
+  const questionContainer = document.getElementById("question-container");
+  const optionsContainer = document.getElementById("options-container");
+  const nextBtn = document.getElementById("next-btn");
+  const scoreContainer = document.getElementById("score-container");
+  const scoreText = document.getElementById("score-text");
+  const startBtn = document.getElementById("start-btn");
 
-    startBtn.addEventListener("click", startQuiz);
+  const QUIZ_KEY = "miden_iq_completed";
 
-    function startQuiz() {
-      intro.style.display = "none";
-      quiz.style.display = "block";
-      currentQuestion = 0;
-      score = 0;
-      showQuestion();
+  window.onload = function() {
+    if (localStorage.getItem(QUIZ_KEY)) {
+      showLockedMessage();
     }
+  };
 
-    function showQuestion() {
-      const qData = quizData[currentQuestion];
-      questionContainer.textContent = `${currentQuestion + 1}. ${qData.q}`;
-      optionsContainer.innerHTML = "";
-      qData.options.forEach((opt, i) => {
-        const div = document.createElement("div");
-        div.classList.add("option");
-        div.textContent = opt;
-        div.addEventListener("click", () => selectOption(i, div));
-        optionsContainer.appendChild(div);
-      });
-    }
+  startBtn.addEventListener("click", startQuiz);
 
-    function selectOption(i, div) {
-      document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
-      div.classList.add("selected");
-      div.dataset.selected = i;
-    }
+  function startQuiz() {
+    intro.style.display = "none";
+    quiz.style.display = "block";
+    currentQuestion = 0;
+    score = 0;
+    showQuestion();
+  }
 
-    nextBtn.addEventListener("click", () => {
-      const selected = document.querySelector(".option.selected");
-      if (!selected) return alert("Please select an answer before continuing!");
-      const selectedIndex = parseInt(selected.dataset.selected);
-      if (selectedIndex === quizData[currentQuestion].answer) score++;
-      currentQuestion++;
-      if (currentQuestion < quizData.length) {
-        showQuestion();
-      } else {
-        showScore();
-      }
+  function showQuestion() {
+    const qData = quizData[currentQuestion];
+    questionContainer.textContent = `${currentQuestion + 1}. ${qData.q}`;
+    optionsContainer.innerHTML = "";
+    nextBtn.disabled = true;
+    qData.options.forEach((opt, i) => {
+      const div = document.createElement("div");
+      div.classList.add("option");
+      div.textContent = opt;
+      div.addEventListener("click", () => selectOption(i, div));
+      optionsContainer.appendChild(div);
     });
+  }
 
-    function showScore() {
-      quiz.style.display = "none";
-      scoreContainer.style.display = "block";
-      scoreText.textContent = `You got ${score} out of ${quizData.length}!`;
+  function selectOption(i, div) {
+    const options = document.querySelectorAll(".option");
+    options.forEach(o => o.style.pointerEvents = "none"); // lock all
+    const correct = quizData[currentQuestion].answer;
+    if (i === correct) {
+      div.style.background = "#d1fae5"; // green
+      div.style.borderColor = "#10b981";
+      score++;
+    } else {
+      div.style.background = "#fee2e2"; // red
+      div.style.borderColor = "#ef4444";
+      options[correct].style.background = "#d1fae5";
+      options[correct].style.borderColor = "#10b981";
     }
+    nextBtn.disabled = false;
+  }
 
-    function restartQuiz() {
-      scoreContainer.style.display = "none";
-      intro.style.display = "block";
+  nextBtn.addEventListener("click", () => {
+    currentQuestion++;
+    if (currentQuestion < quizData.length) {
+      showQuestion();
+    } else {
+      showScore();
     }
-  </script>
-</body>
-</html>
+  });
+
+  function showScore() {
+    quiz.style.display = "none";
+    scoreContainer.style.display = "block";
+    scoreText.textContent = `You got ${score} out of ${quizData.length}!`;
+    localStorage.setItem(QUIZ_KEY, "done");
+  }
+
+  function restartQuiz() {
+    alert("Sorry, this quiz can only be taken once!");
+  }
+
+  function showLockedMessage() {
+    intro.innerHTML = `
+      <p style="color:#ff7a00; font-weight:600;">You’ve already completed the Miden IQ Test.</p>
+      <p style="color:#64748b;">Your browser remembers your attempt. You can’t retake it.</p>
+  
